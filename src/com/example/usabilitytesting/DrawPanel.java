@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Cap;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,13 +15,13 @@ import android.view.View;
 public class DrawPanel extends View{
 	 
 	 private Paint paint;
-	 private ArrayList points;
-	 private ArrayList strokes;
+	 private ArrayList<MyPoint> points;
+	 private ArrayList<ArrayList<MyPoint>> strokes;
 	 private Paint dotPaint;
 	public DrawPanel(Context context) {
 		  super(context);
-		  points = new ArrayList();
-		  strokes = new ArrayList();
+		  points = new ArrayList<MyPoint>();
+		  strokes = new ArrayList<ArrayList<MyPoint>>();
 		  paint = createPaint(Color.BLACK, 16);
 		  System.out.println(paint.getStrokeCap());
 		  paint.setStrokeCap(Cap.ROUND);
@@ -29,44 +30,85 @@ public class DrawPanel extends View{
 		 }
 
 	 @Override
-	 public void onDraw(Canvas c){
-	  super.onDraw(c);
-	  this.setBackgroundColor(Color.WHITE);
-	  for(Object obj: strokes){
-	   drawStroke((ArrayList)obj, c);
-	  }
-	  
-	  drawStroke(points, c);
-	 }
-	 
+
+//	 
+	 public void onDraw(Canvas canvas) {
+		    Path path = new Path();
+		    boolean first = true;
+		    for(int i = 0; i < points.size(); i += 2){
+		        Point point = points.get(i);
+		        if(first){
+		            first = false;
+		            path.moveTo(point.x, point.y);
+		        }
+
+		        else if(i < points.size() - 1){
+		            Point next = points.get(i + 1);
+		            path.quadTo(point.x, point.y, next.x, next.y);
+		        }
+		        else{
+		            path.lineTo(point.x, point.y);
+		        }
+		    }
+
+		    canvas.drawPath(path, paint);
+		}
+//	 public void onDraw(Canvas canvas) {
+//		    Path path = new Path();
+//
+//		    if(points.size() > 1){
+//		        for(int i = points.size() - 2; i < points.size(); i++){
+//		            if(i >= 0){
+//		            	MyPoint point = points.get(i);
+//
+//		                if(i == 0){
+//		                	MyPoint next = points.get(i + 1);
+//		                    point.dx = ((next.x - point.x) / 3);
+//		                    point.dy = ((next.y - point.y) / 3);
+//		                }
+//		                else if(i == points.size() - 1){
+//		                	MyPoint prev = points.get(i - 1);
+//		                    point.dx = ((point.x - prev.x) / 3);
+//		                    point.dy = ((point.y - prev.y) / 3);
+//		                }
+//		                else{
+//		                	MyPoint next = points.get(i + 1);
+//		                	MyPoint prev = points.get(i - 1);
+//		                    point.dx = ((next.x - prev.x) / 3);
+//		                    point.dy = ((next.y - prev.y) / 3);
+//		                }
+//		            }
+//		        }
+//		    }
+//
+//		    boolean first = true;
+//		    for(int i = 0; i < points.size(); i++){
+//		    	MyPoint point = points.get(i);
+//		        if(first){
+//		            first = false;
+//		            path.moveTo(point.x, point.y);
+//		        }
+//		        else{
+//		        	MyPoint prev = points.get(i - 1);
+//		            path.cubicTo(prev.x + prev.dx, prev.y + prev.dy, point.x - point.dx, point.y - point.dy, point.x, point.y);
+//		        }
+//		    }
+//		    canvas.drawPath(path, paint);
+//		}
+//	 
 	 @Override
 	 public boolean onTouchEvent(MotionEvent event){
 	  if(event.getActionMasked() == MotionEvent.ACTION_MOVE){
-	   points.add(new Point((int)event.getX(), (int)event.getY()));
+	   points.add(new MyPoint((int)event.getX(), (int)event.getY()));
 	   invalidate();
 	  }
 	  
 	  if(event.getActionMasked() == MotionEvent.ACTION_UP){
 	   this.strokes.add(points);
-	   points = new ArrayList();
+	   points = new ArrayList<MyPoint>();
 	  }
 	  
 	  return true;
-	 }
-	 
-	 private void drawStroke(ArrayList stroke, Canvas c){
-	  if (stroke.size() > 0) {
-	   Point p0 = (Point)stroke.get(0);
-	   for (int i = 1; i < stroke.size(); i++) {
-	    Point p1 = (Point)stroke.get(i);
-	    c.drawLine(p0.x, p0.y, p1.x, p1.y, paint);
-	    
-//		paint.setStrokeWidth(paint.getStrokeWidth());
-//		c.drawCircle(p0.x, p0.y, (float) 2.5, dotPaint);
-		
-	    p0 = p1;
-	   }
-	  }
 	 }
 	 
 	 private Paint createPaint(int color, float width){
